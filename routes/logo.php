@@ -16,15 +16,22 @@
 use Illuminate\Support\Facades\Storage;
 use Laravel\Lumen\Routing\Router;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use GuzzleHttp\Client;
 
 $router->group(['prefix' => 'logo'], function () use ($router) {
-    $router->get('/{logo}', function ($logo) {
-        $path = Storage::path("logos/$logo");
-        $type = 'image/png';
-        $headers = ['Content-Type' => $type];
-        $response = new BinaryFileResponse($path, 200, $headers);
-        return $response;
-    });
+    $router->get('/airline/{logo}', function ($logo) {
+        $client = new Client();
+        $apiKey = env('IVAO_API_KEY');
+        $apiUrl = "https://api.ivao.aero/v2/airlines/{$logo}/logo?apiKey={$apiKey}";
 
-    $router->get('/airline/{icao}', 'AirlineLogoController@get');
+        try {
+            $response = $client->get($apiUrl);
+            $logoContent = $response->getBody()->getContents();
+            $type = $response->getHeaderLine('Content-Type') ?: 'image/gif';
+
+            return response($logoContent, 200, ['Content-Type' => $type]);
+        } catch (\Exception $e) {
+            return response('Logo not found', 404);
+        }
+    });
 });
