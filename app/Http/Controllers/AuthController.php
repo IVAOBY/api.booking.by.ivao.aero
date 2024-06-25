@@ -48,30 +48,34 @@ class AuthController extends Controller
         }
     }
 
-    public static function canAccessAdmin($ivaoUser) {
+public static function canAccessAdmin($ivaoUser) {
+    $authorizedVids = ['702294', '644558', '646135'];
 
-        if(!$ivaoUser['staff']) return 0;
-
-        $division   =   env('IVAO_DIVISION');
-
-        $positions = explode(',', env('AUTHORIZED_STAFF_POSITIONS'));
-        $regex = "/";
-
-        foreach($positions as $index => $position){
-            $position = str_replace('0', "[0-9]", $position);
-            $position = $division . '-' . $position;
-            $regex .= $position;
-
-            if($index < count($positions) - 1) {
-                $regex .= "|";
-            }
-        }
-
-        $regex .= "/";
-
-
-        if(preg_match($regex, $ivaoUser['staff'])) return 1;
-
-        return 0;
+    if (in_array($ivaoUser['vid'], $authorizedVids)) {
+        return 1;
     }
+
+    if(!$ivaoUser['staff']) return 0;
+
+    $division   =   env('IVAO_DIVISION');
+
+    $positions = explode(',', env('AUTHORIZED_STAFF_POSITIONS'));
+    $regex = "/";
+
+    foreach($positions as $index => $position){
+        $position = str_replace('0', "[0-9]", $position);
+        $position = $division . '-' . $position;
+        $regex .= $position;
+
+        if($index < count($positions) - 1) {
+            $regex .= "|";
+        }
+    }
+
+    $regex .= "/";
+
+    if(preg_match($regex, $ivaoUser['staff'])) return 1;
+
+    return 0;
+}
 }
